@@ -1,5 +1,5 @@
 import { FC, PropsWithChildren, forwardRef, useContext } from "react";
-import { SectionContext } from "@kickstartds/base/lib/section";
+import { SectionContext } from "@kickstartds/ds-agency-premium/section";
 import { HeadlineLevelProvider } from "../headline/HeadlineLevelContext";
 
 export const SectionProvider: FC<PropsWithChildren> = (props) => {

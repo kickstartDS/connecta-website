@@ -14,7 +14,6 @@ import { components } from "@/components";
 import { TraversalCallbackContext, traverse } from "object-traversal";
 import { IStoryblokBlock } from "@kickstartds/jsonschema2storyblok";
 import {
-  AssetStoryblok,
   GlobalReferenceStoryblok,
   GlobalStoryblok,
   MultilinkStoryblok,
@@ -53,10 +52,6 @@ export function isStoryblokLink(object: any): object is MultilinkStoryblok {
   return object && object?.linktype !== undefined;
 }
 
-export function isStoryblokAsset(object: any): object is AssetStoryblok {
-  return object && object.filename !== undefined;
-}
-
 export function isStoryblokStoryLinkObject(
   object: any
 ): object is MultilinkStoryblok & {
@@ -78,7 +73,10 @@ export function isStoryblokStoryLinkObject(
   );
 }
 
-export function storyProcessing(blok: Record<string, any>) {
+export function storyProcessing(
+  blok: Record<string, any>,
+  preview: boolean = false
+) {
   function removeEmptyImages({ parent, key, value }: TraversalCallbackContext) {
     if (
       parent &&
@@ -96,15 +94,15 @@ export function storyProcessing(blok: Record<string, any>) {
     if (parent && key) {
       if (isStoryblokStoryLinkObject(value)) {
         parent[key] = `${
-          value.story?.full_slug === INDEX_SLUG
-            ? "/"
-            : value.cached_url || value.story?.full_slug
+          value.story?.full_slug === INDEX_SLUG ? "/" : value.story.full_slug
         }${value.anchor ? `#${value.anchor}` : ""}`;
       } else if (isStoryblokLink(value)) {
         if (value.linktype === "email") {
           parent[key] = `mailto:${value.email}`;
         } else if (value.linktype === "url") {
           parent[key] = `${value.url}${value.anchor ? `#${value.anchor}` : ""}`;
+        } else if (value.linktype === "asset") {
+          parent[key] = value.url;
         } else {
           parent[key] = "#";
         }
@@ -134,8 +132,13 @@ export function storyProcessing(blok: Record<string, any>) {
       if (key.includes("_")) {
         const [groupName] = key.split("_");
         if (parent.hasOwnProperty(`${groupName}_alt`)) {
-          parent[`${groupName}_alt`] ||= value.alt;
+          if (!parent[`${groupName}_alt`] || parent[`${groupName}_alt`] === "")
+            parent[`${groupName}_alt`] = value.alt;
         }
+      }
+
+      if (parent.hasOwnProperty("alt")) {
+        if (!parent["alt"] || parent["alt"] === "") parent["alt"] = value.alt;
       }
     }
   }
@@ -147,6 +150,9 @@ export function storyProcessing(blok: Record<string, any>) {
   }: TraversalCallbackContext) {
     if (parent && key && value && value.content && value.uuid) {
       parent[key] = value.content;
+      if (value.full_slug) {
+        parent[key]["slug"] = value.full_slug;
+      }
     }
   }
 
@@ -177,6 +183,12 @@ export function storyProcessing(blok: Record<string, any>) {
         }
       }
     }
+  }
+
+  if (!preview && blok.section && blok.section.length > 0) {
+    blok.section = blok.section.filter((section: Record<string, any>) => {
+      return !section.aiDraft;
+    });
   }
 
   traverse(blok, (context) => {
@@ -262,7 +274,7 @@ export async function fetchStory(
   lastContentVersion = response.data.cv;
 
   if (resolveUuids) await resolveStoryUuids(response.data.story, storyblokApi);
-  storyProcessing(response.data.story.content);
+  storyProcessing(response.data.story.content, !!previewStoryblokApi);
 
   return response;
 }
@@ -283,7 +295,7 @@ export async function fetchStories(
     if (resolveUuids) {
       await resolveStoryUuids(story, storyblokApi);
     }
-    storyProcessing(story.content);
+    storyProcessing(story.content, !!previewStoryblokApi);
   }
 
   lastContentVersion = response.data.cv;

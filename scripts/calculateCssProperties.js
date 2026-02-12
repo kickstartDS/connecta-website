@@ -11,7 +11,10 @@ const allToken = require("../token/components.js");
  * Please add all CSS Custom Properties / Design Token you need evaluated here
  */
 const required = {
-  desktop: ["--dsa-logos__grid--gap-horizontal"],
+  desktop: [
+    "--dsa-logos__grid--gap-horizontal",
+    "--dsa-blog-teaser__avatar--size",
+  ],
   phone: ["--dsa-image-story--horizontal-padding"],
   sectionWidths: ["narrow", "default", "wide", "max", "full"],
 };
@@ -275,19 +278,19 @@ const getPropertyValue = (propertyName, breakpoint = "desktop") => {
 
 const sectionWidthRems = {
   narrow: parseInt(
-    getVertexValue("--dsa-section__content--width_narrow").replace("rem", "")
+    getPropertyValue("--dsa-content--width_narrow").replace("rem", "")
   ),
   default: parseInt(
-    getVertexValue("--dsa-section__content--width_default").replace("rem", "")
+    getPropertyValue("--dsa-content--width_default").replace("rem", "")
   ),
   wide: parseInt(
-    getVertexValue("--dsa-section__content--width_wide").replace("rem", "")
+    getPropertyValue("--dsa-content--width_wide").replace("rem", "")
   ),
   max: parseInt(
-    getVertexValue("--dsa-section__content--width_max").replace("rem", "")
+    getPropertyValue("--dsa-content--width_max").replace("rem", "")
   ),
   full: parseInt(
-    getVertexValue("--dsa-section__content--width_full").replace("rem", "")
+    getPropertyValue("--dsa-content--width_full").replace("rem", "")
   ),
 };
 

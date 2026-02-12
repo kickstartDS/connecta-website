@@ -20,6 +20,8 @@ import {
   GlobalStoryblok,
 } from "@/types/components-schema";
 
+export const locale = "de";
+
 export const Global: FC<GlobalStoryblok & SbBlokData> = (props) =>
   isGlobal(props.blok) &&
   props.blok.global &&
@@ -99,7 +101,7 @@ export const components = {
   "blog-teaser": editable(
     dynamic(() =>
       import("@kickstartds/ds-agency-premium/blog-teaser").then(
-        (mod) => mod.BlogTeaser
+        (mod) => mod.BlogTeaserContextDefault
       )
     )
   ),
@@ -170,7 +172,7 @@ export const components = {
   gallery: editable(
     dynamic(() =>
       import("@kickstartds/ds-agency-premium/gallery").then(
-        (mod) => mod.Gallery
+        (mod) => mod.GalleryContextDefault
       )
     )
   ),
@@ -217,7 +219,7 @@ export const components = {
   "teaser-card": editable(
     dynamic(() =>
       import("@kickstartds/ds-agency-premium/teaser-card").then(
-        (mod) => mod.TeaserCard
+        (mod) => mod.TeaserCardContextDefault
       )
     )
   ),

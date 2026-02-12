@@ -12,9 +12,12 @@ import {
   storyProcessing,
 } from "@/helpers/storyblok";
 import { fontClassNamesPreview } from "@/helpers/fonts";
+import { locale } from "@/components";
+import { HeadlineLevelProvider } from "@/components/headline/HeadlineLevelContext";
 
 type PageProps = ISbStory["data"] & {
   settings?: ISbStoryData["content"];
+  language: typeof locale;
 };
 
 const Page: NextPage<PageProps> = ({ story: initialStory }) => {
@@ -22,13 +25,15 @@ const Page: NextPage<PageProps> = ({ story: initialStory }) => {
     resolveRelations: resolvableRelations.join(","),
   });
 
-  if (story && story.content) storyProcessing(story.content);
+  if (story && story.content) storyProcessing(story.content, true);
 
   return story ? (
-    <StoryblokComponent
-      blok={story.content}
-      data-font-class-names={fontClassNamesPreview}
-    />
+    <HeadlineLevelProvider>
+      <StoryblokComponent
+        blok={story.content}
+        data-font-class-names={fontClassNamesPreview}
+      />
+    </HeadlineLevelProvider>
   ) : null;
 };
 
@@ -63,6 +68,7 @@ export const getStaticProps = (async ({ params, previewData }) => {
   );
   const previewStoryblokApi = new StoryblokClient({ accessToken: previewData });
   const slug = params?.slug?.join("/");
+
   try {
     const { pageData, settingsData } = await fetchPageProps(
       slug,
@@ -76,6 +82,7 @@ export const getStaticProps = (async ({ params, previewData }) => {
         fontClassNames: fontClassNamesPreview,
         settings: settingsData.stories[0]?.content || null,
         key: pageData.story.id,
+        language: locale,
       },
     };
   } catch (e) {

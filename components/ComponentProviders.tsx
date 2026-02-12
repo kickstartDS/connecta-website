@@ -27,6 +27,8 @@ import {
 } from "@kickstartds/content/lib/storytelling";
 import { StorytellingProps } from "@kickstartds/content/lib/storytelling/typing";
 
+import { IconProvider } from "./icon/IconProvider";
+
 import { BlogTeaserContext } from "@kickstartds/ds-agency-premium/blog-teaser";
 import { BlogAsideContext } from "@kickstartds/ds-agency-premium/blog-aside";
 import { BlogAuthorContext } from "@kickstartds/ds-agency-premium/blog-author";
@@ -40,10 +42,7 @@ import {
   HeroContext,
 } from "@kickstartds/ds-agency-premium/hero";
 
-import { isStoryblokAsset } from "@/helpers/storyblok";
-
 import { StoryblokSubComponent } from "./StoryblokSubComponent";
-import { TeaserProvider } from "./TeaserProvider";
 import { useBlurHashes } from "./BlurHashContext";
 import { useImagePriority } from "./ImagePriorityContext";
 import { useImageSize } from "./ImageSizeContext";
@@ -86,9 +85,8 @@ const Picture = forwardRef<
     if (internalRef.current) resetBackgroundBlurHash(internalRef.current);
   }, []);
 
-  if (!src || (isStoryblokAsset(src) && !src.filename)) return;
-  const source = isStoryblokAsset(src) ? src.filename : src;
-  const fileUrl = !source.startsWith("http") ? `https:${source}` : source;
+  if (!src) return;
+  const fileUrl = !src.startsWith("http") ? `https:${src}` : src;
   const [width, height] = fileUrl.match(/\/(\d+)x(\d+)\//)?.slice(1) || [];
   const maxWidth = parseInt(width) > size ? Math.floor(size) : parseInt(width);
   const maxHeight =
@@ -104,7 +102,7 @@ const Picture = forwardRef<
       src={fileUrl}
       width={maxWidth}
       height={maxHeight}
-      alt={isStoryblokAsset(src) && src.alt ? src.alt : props.alt || ""}
+      alt={props.alt || ""}
       lazy={priority ? false : lazy}
       fetchPriority="high"
       loading={priority ? "eager" : "lazy"}
@@ -113,7 +111,7 @@ const Picture = forwardRef<
     <Image
       ref={internalRef}
       {...props}
-      alt={isStoryblokAsset(src) && src.alt ? src.alt : props.alt || ""}
+      alt={props.alt || ""}
       src={
         priority
           ? `${fileUrl}/${
@@ -124,7 +122,7 @@ const Picture = forwardRef<
       layout={autoSize ? "fullWidth" : "constrained"}
       aspectRatio={ratio > 0 ? ratio : undefined}
       width={maxWidth}
-      height={ratio < 0 ? maxHeight : undefined}
+      height={autoSize || ratio > 0 ? undefined : maxHeight}
       priority={lazy === false || priority}
       onLoad={(event) => {
         if (event.target instanceof HTMLImageElement) {
@@ -152,38 +150,27 @@ const Hero = forwardRef<
 >((props, ref) => {
   const { image, ...rest } = props;
 
-  const src =
-    (image &&
-      ((image.src &&
-        isStoryblokAsset(image.src) &&
-        `${image.src.filename}/m/600x0`) ||
-        image.src)) ||
-    undefined;
-  const srcMobile =
-    (image &&
-      ((image.srcMobile &&
-        isStoryblokAsset(image.srcMobile) &&
-        image.srcMobile.filename &&
-        `${image.srcMobile.filename}/m/600x0`) ||
-        image.srcMobile)) ||
-    src ||
-    "";
-  const srcTablet =
-    (image &&
-      ((image.srcTablet &&
-        isStoryblokAsset(image.srcTablet) &&
-        image.srcTablet.filename &&
-        `${image.srcTablet.filename}/m/950x0`) ||
-        image.srcTablet)) ||
-    undefined;
-  const srcDesktop =
-    (image &&
-      ((image.srcDesktop &&
-        isStoryblokAsset(image.srcDesktop) &&
-        image.srcDesktop.filename &&
-        `${image.srcDesktop.filename}/m/1600x0`) ||
-        image.srcDesktop)) ||
-    undefined;
+  const ensureModifier = (
+    src: string | undefined,
+    modifier: string
+  ): string => {
+    if (!src) return "";
+    return src.endsWith(modifier) ? src : `${src}${modifier}`;
+  };
+
+  const srcMobile = ensureModifier(image?.srcMobile, "/m/600x0");
+
+  const srcTablet = ensureModifier(
+    image?.srcTablet || image?.srcMobile,
+    "/m/950x0"
+  );
+
+  const srcDesktop = ensureModifier(
+    image?.srcDesktop || image?.srcTablet || image?.srcMobile,
+    "/m/1600x0"
+  );
+
+  const src = image?.src ? ensureModifier(image.src, "/m/600x0") : srcMobile;
 
   return (
     <HeroContextDefault
@@ -211,11 +198,7 @@ const Storytelling = forwardRef<
   return (
     <StorytellingContextDefault
       {...props}
-      backgroundImage={
-        isStoryblokAsset(backgroundImage)
-          ? backgroundImage.filename
-          : backgroundImage
-      }
+      backgroundImage={backgroundImage}
       ref={ref}
     />
   );
@@ -226,11 +209,11 @@ const StorytellingProvider: FC<PropsWithChildren> = (props) => (
 );
 
 const ComponentProviders = (props: PropsWithChildren) => (
-  <StorytellingProvider>
-    <PictureProvider>
-      <HeroProvider>
-        <LinkProvider>
-          <TeaserProvider>
+  <IconProvider>
+    <StorytellingProvider>
+      <PictureProvider>
+        <HeroProvider>
+          <LinkProvider>
             {/* @ts-expect-error */}
             <CtaContext.Provider value={StoryblokSubComponent}>
               {/* @ts-expect-error */}
@@ -242,7 +225,7 @@ const ComponentProviders = (props: PropsWithChildren) => (
                     value={StoryblokSubComponent}
                   >
                     <BlogHeadContext.Provider
-                      /* @ts-expect-error */
+                      // @ts-expect-error
                       value={StoryblokSubComponent}
                     >
                       <BlogAsideContext.Provider
@@ -266,11 +249,11 @@ const ComponentProviders = (props: PropsWithChildren) => (
                 </StatContext.Provider>
               </FeatureContext.Provider>
             </CtaContext.Provider>
-          </TeaserProvider>
-        </LinkProvider>
-      </HeroProvider>
-    </PictureProvider>
-  </StorytellingProvider>
+          </LinkProvider>
+        </HeroProvider>
+      </PictureProvider>
+    </StorytellingProvider>
+  </IconProvider>
 );
 
 export default ComponentProviders;

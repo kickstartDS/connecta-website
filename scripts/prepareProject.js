@@ -35,7 +35,13 @@ const promiseThrottle = new PromiseThrottle({
 });
 
 const presetIdToComponentName = (id) =>
-  id.split("--").shift().split("-").slice(1).join("-");
+  id
+    .split("--")
+    .shift()
+    .split("-")
+    .slice(1)
+    .join("-")
+    .replaceAll("archetypes-", "");
 
 const groupToComponentName = (name) => name.split("/").pop().trim();
 
@@ -54,6 +60,7 @@ const upload = (signed_request, file) => {
 };
 
 const signedUpload = async (fileName, assetFolderId) => {
+  console.log("uploading: ", fileName);
   return new Promise(async (resolve) => {
     const fullPath = `./node_modules/@kickstartds/ds-agency-premium/dist/static/${fileName}`;
     let size = "";
@@ -73,6 +80,7 @@ const signedUpload = async (fileName, assetFolderId) => {
         asset_folder_id: assetFolderId || null,
       }
     );
+
     await upload(
       assetResponse.data,
       "./node_modules/@kickstartds/ds-agency-premium/dist/static/" + fileName
@@ -380,8 +388,7 @@ const prepare = async () => {
     // Add demo content to space
     if (
       !stories.some(
-        (story) =>
-          story.name === "Getting Started" && story.slug === "getting-started"
+        (story) => story.name === "Getting Started" && story.slug === "home"
       )
     ) {
       await Storyblok.post(
