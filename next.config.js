@@ -23,6 +23,7 @@ const nextConfig = {
     "@kickstartds/form",
     "@kickstartds/ds-agency-premium",
   ],
+  output: "standalone",
 };
 
 module.exports = {
@@ -36,6 +37,16 @@ module.exports = {
             value: cspHeader.replace(/\n/g, ""),
           },
         ],
+      },
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "header", key: "host", value: "troisdorf-immobilien.de" }],
+        destination: "https://www.troisdorf-immobilien.de/:path*",
+        permanent: true,
       },
     ];
   },
